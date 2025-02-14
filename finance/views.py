@@ -6,18 +6,18 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
 
-from finance.choices import KirimChiqimStatusChoice
-from finance.models import KirimChiqim, Category
-from finance.permissions import KirimChiqimOwnedPermission
-from finance.serializers import CategoryModelSerializer, KirimChiqimModelSerializer, KirimChiqimDeleteModelSerializer
+from finance.choices import ExpenseTypeChoice
+from finance.models import Expense, Category
+from finance.permissions import ExpenseOwnedPermission
+from finance.serializers import CategoryModelSerializer, ExpenseModelSerializer, ExpenseDeleteModelSerializer
 
 
 @extend_schema(tags=['category'], responses=CategoryModelSerializer, parameters=[
     OpenApiParameter(
-        name="status",
+        name="type",
         description="Order holati bo'yicha filtrlash uchun.",
         type={"type": "string"},
-        enum=[choice[0] for choice in KirimChiqimStatusChoice.choices],
+        enum=[choice[0] for choice in ExpenseTypeChoice.choices],
         required=True,
     )
 ])
@@ -25,44 +25,44 @@ class CategoryListAPIView(ListAPIView):
     serializer_class = CategoryModelSerializer
 
     def get_queryset(self):
-        return Category.objects.filter(status=self.request.query_params.get('status'))
+        return Category.objects.filter(type=self.request.query_params.get('type'))
 
 
-@extend_schema(tags=['Kirim chiqim'], responses=KirimChiqimModelSerializer)
-class KirimChiqimCreateAPIView(CreateAPIView):
-    queryset = KirimChiqim.objects.all()
-    serializer_class = KirimChiqimModelSerializer
+@extend_schema(tags=['Expense'], responses=ExpenseModelSerializer)
+class ExpenseCreateAPIView(CreateAPIView):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseModelSerializer
     permission_classes = IsAuthenticated,
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 
-@extend_schema(tags=['Kirim chiqim'], responses=KirimChiqimModelSerializer)
-class KirimChiqimUpdateAPIView(UpdateAPIView):
-    permission_classes = IsAuthenticated, KirimChiqimOwnedPermission,
-    queryset = KirimChiqim.objects.all()
-    serializer_class = KirimChiqimModelSerializer
+@extend_schema(tags=['Expense'], responses=ExpenseModelSerializer)
+class ExpenseUpdateAPIView(UpdateAPIView):
+    permission_classes = IsAuthenticated, ExpenseOwnedPermission,
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseModelSerializer
     lookup_field = 'pk'
 
 
-@extend_schema(tags=['Kirim chiqim'])
+@extend_schema(tags=['Expense'])
 @permission_classes([IsAuthenticated])
-class KirimChiqimDestroyAPIView(APIView):
+class ExpenseDestroyAPIView(APIView):
     def post(self, request, pk):
-        kirim_chiqim = KirimChiqim.objects.filter(id=pk)
+        kirim_chiqim = Expense.objects.filter(id=pk)
         if not kirim_chiqim or kirim_chiqim.first().user != request.user:
             return JsonResponse({"error": "Expenses not found!"}, status=HTTP_404_NOT_FOUND)
-        serialized_data = KirimChiqimDeleteModelSerializer(instance=kirim_chiqim.first()).data
+        serialized_data = ExpenseDeleteModelSerializer(instance=kirim_chiqim.first()).data
         kirim_chiqim.delete()
         return JsonResponse(serialized_data)
 
-@extend_schema(tags=['Kirim chiqim'])
-@permission_classes([IsAuthenticated, KirimChiqimOwnedPermission])
-class KirimChiqimRetrieveAPIView(RetrieveAPIView):
+@extend_schema(tags=['Expense'])
+@permission_classes([IsAuthenticated, ExpenseOwnedPermission])
+class ExpenseRetrieveAPIView(RetrieveAPIView):
     lookup_field = 'pk'
-    queryset = KirimChiqim.objects.all()
-    serializer_class = KirimChiqimModelSerializer
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseModelSerializer
 
 
 
@@ -78,27 +78,27 @@ class KirimChiqimRetrieveAPIView(RetrieveAPIView):
 #         name="status",
 #         description="Order holati bo'yicha filtrlash uchun.",
 #         type={"type": "string"},
-#         enum=[choice[0] for choice in KirimChiqimStatusChoice.choices],
+#         enum=[choice[0] for choice in ExpenseStatusChoice.choices],
 #         required=False,
 #     ),
 #
 # ])
-@extend_schema(tags=['Kirim chiqim'])
+@extend_schema(tags=['Expense'])
 @permission_classes([IsAuthenticated])
-class KirimChiqimListAPIView(ListAPIView):
-    serializer_class = KirimChiqimModelSerializer
+class ExpenseListAPIView(ListAPIView):
+    serializer_class = ExpenseModelSerializer
 
     def get_queryset(self):
-        return KirimChiqim.objects.filter(user=self.request.user)
+        return Expense.objects.filter(user=self.request.user)
     # def get(self, request):
     #     period = request.GET.get('period', None)
     #     status = request.GET.get('status', None)
-    #     history = KirimChiqim.objects.filter(user=request.user).order_by('-created_at')
+    #     history = Expense.objects.filter(user=request.user).order_by('-created_at')
     #     if status:
     #         if status == 'profit':
-    #             history = history.filter(status=KirimChiqimStatusChoice.PROFIT)
+    #             history = history.filter(status=ExpenseStatusChoice.PROFIT)
     #         elif status == 'loss':
-    #             history = history.filter(status=KirimChiqimStatusChoice.LOSS)
+    #             history = history.filter(status=ExpenseStatusChoice.LOSS)
     #
     #     if period:
     #         if period == 'today':
@@ -118,9 +118,9 @@ class KirimChiqimListAPIView(ListAPIView):
     #         history = history.filter(category_id=category_id)
     #
     #     for w in history:
-    #         if w.status == KirimChiqimStatusChoice.PROFIT:
+    #         if w.status == ExpenseStatusChoice.PROFIT:
     #             income += w.money
-    #         elif w.status == KirimChiqimStatusChoice.LOSS:
+    #         elif w.status == ExpenseStatusChoice.LOSS:
     #             expenses += w.money
     #
     #     data = {"history": HistoryModelSerializer(instance=history, many=True).data,
@@ -151,15 +151,15 @@ class TotalAPIView(APIView):
         expenses = 0
         category_id = request.data.get('category_id', None)
 
-        objs = KirimChiqim.objects.filter(user=request.user)
+        objs = Expense.objects.filter(user=request.user)
 
         if category_id:
             objs = objs.filter(category_id=category_id)
 
         for w in objs:
-            if w.status == KirimChiqimStatusChoice.PROFIT:
+            if w.type == ExpenseTypeChoice.PROFIT:
                 income += w.money
-            elif w.status == KirimChiqimStatusChoice.LOSS:
+            elif w.type == ExpenseTypeChoice.LOSS:
                 expenses += w.money
 
         return JsonResponse({'total': income - expenses, 'income': income, 'expenses': expenses})

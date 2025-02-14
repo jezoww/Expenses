@@ -12,20 +12,20 @@ from admin2.serializers import CategoryModelSerializer
 from finance.models import Category
 
 
-@extend_schema(tags=['admin'], request=CategoryModelSerializer, responses=CategoryModelSerializer)
+@extend_schema(tags=['category'], request=CategoryModelSerializer, responses=CategoryModelSerializer)
 class CategoryCreateAPIView(CreateAPIView):
     serializer_class = CategoryModelSerializer
     queryset = Category.objects.all()
     permission_classes = IsAuthenticated, AdminPermission
 
-@extend_schema(tags=['admin'])
+@extend_schema(tags=['category'])
 class CategoryUpdateAPIView(UpdateAPIView):
     lookup_field = 'pk'
     serializer_class = CategoryModelSerializer
     queryset = Category.objects.all()
     permission_classes = IsAuthenticated, AdminPermission
 
-@extend_schema(tags=['admin'])
+@extend_schema(tags=['category'])
 @permission_classes([IsAuthenticated, AdminPermission])
 class DeleteCategoryAPIView(APIView):
     def post(self, request, pk):

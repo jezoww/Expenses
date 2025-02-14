@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from finance.choices import KirimChiqimStatusChoice
+from finance.choices import ExpenseTypeChoice
 from finance.models import Category
 from user.models import User
 
@@ -19,7 +19,7 @@ class TestAdmin:
     def token1(self, client, db):
         url = reverse('token_obtain_pair')
 
-        data = {"phone": "1", "password": "Jezow2000!"}
+        data = {"email": "1@gmail.com", "password": "Jezow2000!"}
 
         response = client.post(url, data)
         return response.data.get("access")
@@ -28,24 +28,24 @@ class TestAdmin:
     def token2(self, client, db):
         url = reverse('token_obtain_pair')
 
-        data = {"phone": "2", "password": "Jezow2000!"}
+        data = {"email": "2@gmail.com", "password": "Jezow2000!"}
 
         response = client.post(url, data)
         return response.data.get("access")
 
     @pytest.fixture
     def db(self):
-        User.objects.create(fullname='ghj', phone='1', password=make_password('Jezow2000!'), is_staff=True,
+        User.objects.create(fullname='ghj', email='1@gmail.com', password=make_password('Jezow2000!'), is_staff=True,
                             is_superuser=True)
-        User.objects.create(fullname='ghj', phone='2', password=make_password('Jezow2000!'))
-        Category.objects.create(name='fds', status=KirimChiqimStatusChoice.LOSS)
+        User.objects.create(fullname='ghj', email='2@gmail.com', password=make_password('Jezow2000!'))
+        Category.objects.create(name='fds', type=ExpenseTypeChoice.LOSS)
 
     def test_create(self, client, db, token1, token2):
         url = reverse('category-create')
 
         data = {
             'name': 'gfds',
-            'status': 'loss'
+            'type': 'loss'
         }
 
         response = client.post(url, data, headers={"Authorization": "Bearer " + token1})
@@ -65,7 +65,7 @@ class TestAdmin:
 
         data = {
             'name': 'hgfdsfgh',
-            'status': 'loss'
+            'type': 'loss'
         }
 
         response = client.patch(url, data, headers={"Authorization": "Bearer " + token1})

@@ -3,13 +3,13 @@ from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from finance.choices import KirimChiqimStatusChoice
-from finance.models import Category, KirimChiqim
+from finance.choices import ExpenseTypeChoice
+from finance.models import Category, Expense
 from user.models import User
 
 
 @pytest.mark.django_db
-class TestKirimChiqim:
+class TestExpense:
 
     @pytest.fixture
     def client(self):
@@ -19,23 +19,23 @@ class TestKirimChiqim:
     def token(self, client, db):
         url = reverse('token_obtain_pair')
 
-        data = {"phone": "+998991001143", "password": "Jezow2000!"}
+        data = {"email": "test@gmail.com", "password": "Jezow2000!"}
 
         response = client.post(url, data)
         return response.data.get("access")
 
     @pytest.fixture
     def db(self):
-        user = User.objects.create(fullname='Test', phone='+998991001143', password=make_password('Jezow2000!'))
+        user = User.objects.create(fullname='Test', email='test@gmail.com', password=make_password('Jezow2000!'))
         Category.objects.create(name='Test', image='images/categories/test.png')
-        KirimChiqim.objects.create(money=500, description="fg", status='profit', category_id=1, user=user)
+        Expense.objects.create(money=500, description="fg", type='profit', category_id=1, user=user)
 
     def test_create(self, client, db, token):
-        url = reverse('kirimchiqim-create')
+        url = reverse('expense-create')
         data = {
             "money": "500",
             "description": "WEtgyhuj",
-            "status": "profit",
+            "type": "profit",
             "category": 1
         }
 
@@ -44,7 +44,7 @@ class TestKirimChiqim:
         assert response.status_code == 201
 
     def test_delete(self, client, db, token):
-        url = reverse('kirimchiqim-delete', kwargs={"pk": 1})
+        url = reverse('expense-delete', kwargs={"pk": 1})
 
         response = client.post(url, headers={"Authorization": "Bearer " + token})
 
@@ -57,7 +57,7 @@ class TestKirimChiqim:
         assert response.status_code == 404
 
     def test_update(self, client, db, token):
-        url = reverse('kirimchiqim-update', kwargs={'pk': 1})
+        url = reverse('expense-update', kwargs={'pk': 1})
 
         data = {'money': 1000.00}
 
@@ -68,7 +68,7 @@ class TestKirimChiqim:
 
         # --------------------------------------
 
-        url = reverse('kirimchiqim-update', kwargs={'pk': 11546})
+        url = reverse('expense-update', kwargs={'pk': 11546})
         data = {'money': 1000.00}
 
         response = client.patch(url, data, headers={"Authorization": "Bearer " + token})
@@ -76,7 +76,7 @@ class TestKirimChiqim:
         assert response.status_code == 404
 
     def test_detail(self, client, db, token):
-        url = reverse('kirimchiqim-detail', kwargs={'pk': 1})
+        url = reverse('expense-detail', kwargs={'pk': 1})
 
         response = client.get(url, headers={"Authorization": "Bearer " + token})
 
@@ -84,14 +84,14 @@ class TestKirimChiqim:
 
         # --------------------------------------
 
-        url = reverse('kirimchiqim-detail', kwargs={'pk': 5412})
+        url = reverse('expense-detail', kwargs={'pk': 5412})
 
         response = client.get(url, headers={"Authorization": "Bearer " + token})
 
         assert response.status_code == 404
 
     def test_list(self, client, db, token):
-        url = reverse('kirimchiqim-list')
+        url = reverse('expense-list')
 
         response = client.get(url, headers={"Authorization": "Bearer " + token})
 
@@ -116,22 +116,22 @@ class TestCategory:
     def token(self, client, db):
         url = reverse('token_obtain_pair')
 
-        data = {"phone": "+998991001143", "password": "Jezow2000!"}
+        data = {"email": "test@gmail.com", "password": "Jezow2000!"}
 
         response = client.post(url, data)
         return response.data.get("access")
 
     @pytest.fixture
     def db(self):
-        user = User.objects.create(fullname='Test', phone='+998991001143', password=make_password('Jezow2000!'))
-        Category.objects.create(name='Test', image='images/categories/test.png', status=KirimChiqimStatusChoice.LOSS)
-        KirimChiqim.objects.create(money=500, description="fg", status='profit', category_id=1, user=user)
+        user = User.objects.create(fullname='Test', email='test@gmail.com', password=make_password('Jezow2000!'))
+        Category.objects.create(name='Test', image='images/categories/test.png', type=ExpenseTypeChoice.LOSS)
+        Expense.objects.create(money=500, description="fg", type='profit', category_id=1, user=user)
 
     def test_category_list(self, client, db):
         url = reverse('category-list')
 
         data = {
-            'status': 'loss'
+            'type': 'loss'
         }
 
         response = client.get(url, data)
@@ -139,7 +139,7 @@ class TestCategory:
         assert response.status_code == 200
         assert len(response.data) == 1
 
-        data['status'] = 'profit'
+        data['type'] = 'profit'
 
         response = client.get(url, data)
 

@@ -11,3 +11,8 @@ class CategoryModelSerializer(ModelSerializer):
         extra_kwargs = {
             'image': {'required': False}
         }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['status'] = 200
+        return data
