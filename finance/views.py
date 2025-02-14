@@ -28,6 +28,8 @@ class CategoryListAPIView(ListAPIView):
         return Category.objects.filter(type=self.request.query_params.get('type'))
 
 
+
+
 @extend_schema(tags=['Expense'], responses=ExpenseModelSerializer)
 class ExpenseCreateAPIView(CreateAPIView):
     queryset = Expense.objects.all()

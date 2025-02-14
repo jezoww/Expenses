@@ -8,9 +8,14 @@ class CategoryModelSerializer(ModelSerializer):
         model = Category
         fields = 'id', 'name', 'image'
 
+    def __init__(self, *args, **kwargs):
+        self.need_status = kwargs.pop('need_status', True)
+        super().__init__(*args, **kwargs)
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['status'] = 200
+        if self.need_status:
+            data['status'] = 200
         return data
 
 
@@ -18,17 +23,21 @@ class ExpenseModelSerializer(ModelSerializer):
     class Meta:
         model = Expense
         fields = '__all__'
-
         extra_kwargs = {
             'user': {'read_only': True, 'required': False}
         }
 
+    def __init__(self, *args, **kwargs):
+        self.need_status = kwargs.pop('need_status', True)
+        super().__init__(*args, **kwargs)
+
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['category'] = CategoryModelSerializer(
-            instance=Category.objects.filter(id=data.get('category')).first()).data
-
-        data['status'] = 200
+            instance=Category.objects.filter(id=data.get('category')).first(), need_status=False).data
+        if self.need_status:
+            data['status'] = 200
         return data
 
 
@@ -41,7 +50,6 @@ class HistoryModelSerializer(ModelSerializer):
         data = super().to_representation(instance)
         data['category'] = CategoryModelSerializer(
             instance=Category.objects.filter(id=data.get('category')).first()).data
-        data['status'] = 200
         return data
 
 
@@ -52,5 +60,4 @@ class ExpenseDeleteModelSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['status'] = 200
         return data
